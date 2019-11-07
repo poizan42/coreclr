@@ -345,11 +345,14 @@ namespace System.IO
             // and delegate to our base class (which will call into Read/ReadAsync) when we are not sure.
             // Similarly, if we weren't opened for asynchronous I/O, call to the base implementation so that
             // Read is invoked asynchronously.
-            if (GetType() != typeof(FileStream) || !_useAsyncIO)
+            if (GetType() != typeof(FileStream))
                 return base.ReadAsync(buffer, offset, count, cancellationToken);
 
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<int>(cancellationToken);
+
+            if (!_useAsyncIO)
+                return (Task<int>)BeginReadInternal(buffer, offset, count, cancellationToken, null, null, serializeAsynchronously: true, apm: false);
 
             if (IsClosed)
                 throw Error.GetFileNotOpen();
